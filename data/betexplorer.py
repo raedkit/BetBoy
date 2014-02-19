@@ -3,21 +3,25 @@
 import re
 import os
 from csv import reader
+import urllib2
+import sys
 
-from PySide import QtCore
+from PySide import QtGui
 
-
-class BetExploerer():
+class BetExplorer():
     """
-    Scrape from betexploerer.com
+    Scrape from betexplorer.com
     results+fixtures+odds
     """
-    def __init__(self,dst, mode):
-        
-
-        self.html = os.path.join('tmp','page')
+    def __init__(self,url,dst, mode):
+        try:
+            self.html = urllib2.urlopen(url).read()
+        except:
+            self.html = ""
+            e = sys.exc_info()[0]
+            print "Error: %s" % e 
         self.dst = dst
-        self.be_mode = mode
+        self.be_mode = mode #fixtures or results
         self.run()
     def run(self):
         ''' Start thread'''
@@ -26,8 +30,7 @@ class BetExploerer():
         else:
             self.scrape_fixtures(self.dst)
     def scrape_results(self):
-        with open(self.html, 'r') as f:
-            html_page = f.read()
+        html_page = self.html
         re_pattern = '<td class="first-cell tl">.*?</td></tr>'
         re_compiled = re.compile(re_pattern,re.DOTALL)
         re_pattern_a = '.*?return false;">(?P<home>.*?) - (?P<away>.*?)</a>.*?return false;">(?P<goals_home>.*?):(?P<goals_away>.*?)</a.*?<td class=("odds best-betrate"|"odds")>(?P<odd_1>.*?)</td>.*?<td class=("odds best-betrate"|"odds")>(?P<odd_x>.*?)</td>.*?<td class=("odds best-betrate"|"odds")>(?P<odd_2>.*?)</td>.*?<td class="last-cell nobr date">(?P<date>.*?)</td>'
@@ -40,6 +43,7 @@ class BetExploerer():
             html_text = ""
         with open(os.path.join('tmp','results.txt'),'w') as f:
             while search:
+                QtGui.QApplication.processEvents()
                 search_a = re_compiled_a.search(html_text)
                 if search_a:
                     group = search_a.group('date','home','away','goals_home','goals_away',
@@ -71,8 +75,7 @@ class BetExploerer():
                     html_text = search.group(0)
 
     def scrape_fixtures(self, dst):
-        with open(self.html, 'r') as f:
-            html_page = f.read()
+        html_page = self.html
         re_pattern_main = '"first-cell date tl">.*?</td></tr>'
         re_pattern_a = 'date tl">(?P<date>.*?) .*?<a href.*?>(?P<home>.*?) - (?P<away>.*?)</a>.*?<a.*?"mySelectionsTip">(?P<odd_1>.*?)</a>.*?<a.*?"mySelectionsTip">(?P<odd_x>.*?)</a>.*?<a.*?"mySelectionsTip">(?P<odd_2>.*?)</a>.*?'
         re_pattern_b = '"first-cell date tl">(?P<date>.*?) .*?<a href.*?>(?P<home>.*?) - (?P<away>.*?)</a>(?P<odd_1>.)(?P<odd_x>.)(?P<odd_2>.)'
@@ -88,6 +91,7 @@ class BetExploerer():
                 print 'No results'
                 html_text = ""
             while search:
+                QtGui.QApplication.processEvents()
                 search_a = re_compiled_a.search(html_text)
                 if search_a:
                     group = search_a.group('date','home','away','odd_1','odd_x','odd_2')

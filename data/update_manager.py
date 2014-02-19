@@ -23,7 +23,7 @@ from PySide import QtCore, QtGui
 from ui.update import Ui_Update
 from bb_shared import Shared
 import betradar
-from betexploerer import BetExploerer
+from betexplorer import BetExplorer
 
 
 
@@ -117,7 +117,6 @@ class UpdateApp(QtGui.QWidget, Shared):
             self.page.setZoomFactor(0.7)
             self.update_state = 0
             ############################
-            ############################
             child = self.gui.tree_selected.topLevelItem(i)
             self.league = child.text(0)
             self.url = child.text(1)
@@ -135,13 +134,11 @@ class UpdateApp(QtGui.QWidget, Shared):
                 self.be_mode='results'
                 self.url_1 =self.url+'results/'
                 self.url_2 =self.url+'fixtures/'
-                be_urls = [self.url_1,self.url_2]
-                for i in be_urls:
-                    self.update_state = 1
-                    self.page.load(QtCore.QUrl(i))
-                    while self.update_state == 1:
-                        QtGui.QApplication.processEvents()
-                    print '...........................................'
+                page_download = BetExplorer('wwda',self.path + self.league,'results')
+                QtGui.QApplication.processEvents()
+                page_download = BetExplorer(self.url_2,self.path + self.league,'fixtures')
+                QtGui.QApplication.processEvents()
+                
             #betradar
             if self.update_mode == 'betradar':
                 self.update_state = 1
@@ -155,7 +152,7 @@ class UpdateApp(QtGui.QWidget, Shared):
             self.gui.textBrowser.append('--------------')
         self.gui.textBrowser.append('Update finished')
         self.gui.button_update.setEnabled(1)
-        self.find_broken_leagues()
+        
 
     def _load_finished(self):
         ''' When main frame loaded(page fully loaded), start scraping'''
